@@ -29,7 +29,7 @@ const ReverseScrollViewSplits = (): React.ReactNode => {
             <motion.div
                 style={{y}}
                 className={`flex-1 text-white h-full`}>
-                <h1 className={`text-[3rem] font-bold uppercase text-right`}>TIktok</h1>
+                <h1 className={`text-[3rem] font-bold uppercase text-right`}>Candidates</h1>
                 <p className={`font-normal text-right`}>UI/UX Design, Web Motion</p>
                 <div className={`w-full flex justify-end mt-5`}>
                      <button className={`p-5 px-10 rounded-full border-[0.25px] border-white`}>See More</button>
