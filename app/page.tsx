@@ -224,7 +224,7 @@ export default function Home(): React.ReactNode {
                                 mousePosition.scaleY.set(1)
                             }}
                             className={`font-light text-[1.8rem] text-center uppercase text-gray-400`}>
-                            Cast your vote with confidence, powered by Kalp DLT
+                            Cast your vote with trust, powered by Kalp DLT
                         </p>
 
                         <p
