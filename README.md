@@ -49,10 +49,11 @@ This project uses [\`next/font\`](https://nextjs.org/docs/basic-features/font-op
 
 Include relevant screenshots of your app showing candidate selection, voting interactions, and the vote count retrieval.
 
-- Landing Page
-public/screenshots/landing-page.png
-- Mordern UI
-/public/screenshots/mordern-ui.png`
+- Landing Page  
+  ![Landing Page](public/screenshots/landing-page.png)
+
+- Modern UI  
+  ![Modern UI](public/screenshots/modern-ui.png)
 
 ## Learn More
 
