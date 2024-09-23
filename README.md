@@ -47,9 +47,10 @@ This project uses [\`next/font\`](https://nextjs.org/docs/basic-features/font-op
 
 Include relevant screenshots of your app showing candidate selection, voting interactions, and the vote count retrieval.
 
-Example paths:
-- `/public/screenshots/screenshot1.png`
-- `/public/screenshots/screenshot2.png`
+- Landing Page
+public/screenshots/landing-page.png
+- Mordern UI
+/public/screenshots/mordern-ui.png`
 
 ## Learn More
 
