@@ -28,7 +28,7 @@ This project leverages Kalp Studio's DLT for secure and transparent voting trans
 
 First, run the development server:
 
-\`\`\`bash
+bash
 npm run dev
 # or
 yarn dev
@@ -36,7 +36,6 @@ yarn dev
 pnpm dev
 # or
 bun dev
-\`\`\`
 
 Open [http://localhost:3000](http://localhost:3000) to see the project in action.
 
