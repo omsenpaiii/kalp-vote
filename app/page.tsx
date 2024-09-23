@@ -386,14 +386,14 @@ export default function Home(): React.ReactNode {
           className={`h-screen w-screen flex justify-center items-center`}
         >
           <motion.div
-            style={{
-              scale,
-              y,
-              borderRadius,
-            }}
-            className={`w-[85%] transition-all overflow-hidden duration-300 ease-out h-[80%] rounded-xl mx-auto`}
-          >
-           <iframe
+
+              style={{
+                scale,
+                y,
+              }}
+              className={`w-[85%] transition-all overflow-hidden duration-300 ease-out h-[80%] rounded-xl mx-auto ${borderRadius ? `border-radius-${borderRadius}px` : ''}`}
+            >
+            <iframe
               width="100%"
               height="100%"
               src="https://www.youtube.com/embed/SFOREuAkk_4"
@@ -402,9 +402,9 @@ export default function Home(): React.ReactNode {
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
-          ></iframe>
- 
+            ></iframe>
           </motion.div>
+
         </section>
 
         {/* Know Your Candidates section */}

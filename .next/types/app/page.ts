@@ -1,4 +1,4 @@
-// File: C:\Users\omtom\Downloads\om-uiux-works-main\om-uiux-works-main\app\page.tsx
+// File: C:\Users\omtom\OneDrive\Documents\GitHub\kalp-vote\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
