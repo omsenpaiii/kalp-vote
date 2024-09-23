@@ -11,7 +11,7 @@ const initialCandidates = [
 
 // Candidate images
 const candidateImages: Record<string, string> = {
-  "1": "/images/modi-image.png",   // Replace with actual image paths
+  "1": "/images/modi-image.png", 
   "2": "/images/trump-image.png",
   "3": "/images/kennedy-image.jpeg",
 };

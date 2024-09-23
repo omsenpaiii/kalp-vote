@@ -9,6 +9,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import ViewSplits from "@/app/components/ViewSplits";
 import ScrollViewSplits from "@/app/components/ScrollViewSplits";
 import ReverseScrollViewSplits from "@/app/components/ReverseScrollViewSplits";
 
@@ -445,7 +446,7 @@ export default function Home(): React.ReactNode {
             {/*this is just a spacer*/}
             <div className={`h-[10rem] w-full `} />
 
-            <ScrollViewSplits />
+            <ViewSplits />
             <div className={`h-[5rem] w-full `} />
             <ReverseScrollViewSplits />
             <div className={`h-[5rem] w-full `} />
