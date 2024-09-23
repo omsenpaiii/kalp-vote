@@ -53,7 +53,7 @@ Include relevant screenshots of your app showing candidate selection, voting int
   ![Landing Page](public/screenshots/landing-page.png)
 
 - Modern UI  
-  ![Modern UI](public/screenshots/modern-ui.png)
+  ![Modern UI](public/screenshots/mordern-ui.png)
 
 ## Learn More
 
