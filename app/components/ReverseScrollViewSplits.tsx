@@ -10,8 +10,23 @@ const initialCandidates = [
 ];
 
 const ReverseScrollViewSplits = (): React.ReactNode => {
-    const [candidates, setCandidates] = useState(initialCandidates);
+
+    type candidateType = {
+        id: string,
+        name: string,
+        votes: number
+    };
+
+    const [candidates, setCandidates] = useState<candidateType[]>(initialCandidates);
+
+    React.useEffect(() => {
+        const data = localStorage.getItem("votes");
+        if(data) {
+            setCandidates(JSON.parse(data));
+        } 
+    }, []);
     const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
+    console.log(candidates);
 
     const ref = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
@@ -20,7 +35,7 @@ const ReverseScrollViewSplits = (): React.ReactNode => {
     });
 
     const rotate = useTransform(scrollYProgress, [0, 1], ["10deg", "0deg"]);
-    const x = useTransform(scrollYProgress, [0, 1], ["-20rem", "0rem"]); // Move left
+    const x = useTransform(scrollYProgress, [0, 1], ["-20rem", "0rem"]);
     const y = useTransform(scrollYProgress, [0, 1], ["-20rem", "0rem"]);
 
     const fetchCandidateVotes = async () => {
@@ -40,12 +55,13 @@ const ReverseScrollViewSplits = (): React.ReactNode => {
             );
 
             const results = response.data.result?.votes || {};
-            const updatedCandidates = candidates.map(candidate => ({
+            const updatedCandidates: candidateType[] = candidates.map((candidate) => ({
                 ...candidate,
                 votes: results[candidate.id] || 0
             }));
 
             setCandidates(updatedCandidates);
+            localStorage.setItem("votes", JSON.stringify(updatedCandidates)); // Store updated votes
         } catch (error) {
             console.error("Error fetching votes:", error);
         }
@@ -57,11 +73,11 @@ const ReverseScrollViewSplits = (): React.ReactNode => {
         setLoadingState((prevState) => ({ ...prevState, [id]: 'voting' }));
 
         // Optimistically update local vote count
-        setCandidates((prevCandidates) =>
-            prevCandidates.map(candidate =>
-                candidate.id === id ? { ...candidate, votes: candidate.votes + 1 } : candidate
-            )
+        const updatedCandidates = candidates.map(candidate =>
+            candidate.id === id ? { ...candidate, votes: candidate.votes + 1 } : candidate
         );
+        setCandidates(updatedCandidates);
+        localStorage.setItem("votes", JSON.stringify(updatedCandidates));
 
         try {
             const response = await axios.post(
@@ -83,22 +99,30 @@ const ReverseScrollViewSplits = (): React.ReactNode => {
 
             console.log('Vote response:', response.data);
             alert(`Vote successful for candidate ID: ${id}`);
+            // Fetch updated votes after successful vote
             fetchCandidateVotes();
         } catch (error) {
             console.error(`Error voting for candidate ID ${id}:`, error);
             alert(`Voting failed for candidate ID: ${id}. Please try again.`);
+            // Revert the optimistic update if the vote failed
             setCandidates((prevCandidates) =>
                 prevCandidates.map(candidate =>
                     candidate.id === id ? { ...candidate, votes: candidate.votes - 1 } : candidate
                 )
             );
+            localStorage.setItem("votes", JSON.stringify(updatedCandidates));
         } finally {
             setLoadingState((prevState) => ({ ...prevState, [id]: null }));
         }
     };
 
     useEffect(() => {
-        fetchCandidateVotes();
+        const savedVotes = localStorage.getItem("votes");
+        if (savedVotes) {
+            setCandidates(JSON.parse(savedVotes)); // Restore votes from localStorage
+        } else {
+            fetchCandidateVotes(); // Fetch fresh votes
+        }
     }, []);
 
     // Get details for the second candidate (Donald Trump)
