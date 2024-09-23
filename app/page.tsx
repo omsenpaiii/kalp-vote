@@ -403,13 +403,13 @@ export default function Home(): React.ReactNode {
                                 ref={fourthSectionBoxOneRef}
                                 style={{ rotate: fourthSectionBoxRotate, x: fourthSectionBoxX }}
                                 className={`bg-white/10 flex-1 rounded-2xl origin-bottom-left flex justify-center items-center`}>
-                                <h2 className="text-[3rem] font-bold">Om</h2>
+                                <h2 className="text-[3rem] font-bold">Om Tomar</h2>
                             </motion.div>
                             <motion.div
                                 ref={fourthSectionBoxTwoRef}
                                 style={{ rotate: fourthSectionBoxTwoRotate, x: fourthSectionBoxTwoX }}
                                 className={`bg-white/10 flex-1 rounded-2xl flex justify-center items-center`}>
-                                <h2 className="text-[3rem] font-bold">Aneeshu</h2>
+                                <h2 className="text-[3rem] font-bold">Anneshu Nag</h2>
                             </motion.div>
                         </div>
 
@@ -424,7 +424,7 @@ export default function Home(): React.ReactNode {
                                 ref={fourthSectionBoxFourRef}
                                 style={{ rotate: fourthSectionBoxFourRotate, x: fourthSectionBoxFourX }}
                                 className={`bg-white/10 flex-1 rounded-2xl flex justify-center items-center`}>
-                                <h2 className="text-[3rem] font-bold">Sahaj</h2>
+                                <h2 className="text-[3rem] font-bold">Sahajpal Singh</h2>
                             </motion.div>
                         </div>
                     </div>
