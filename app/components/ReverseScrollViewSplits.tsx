@@ -1,165 +1,91 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
-import axios from 'axios';
-
-// Initial candidate data with votes
-const initialCandidates = [
-  { id: "1", name: "Narendra Modi", votes: 0 },
-  { id: "2", name: "Donald Trump", votes: 0 },
-  { id: "3", name: "Bobby Kennedy", votes: 0 },
-];
-
-// Candidate images
-const candidateImages: Record<string, string> = {
-  "1": "/images/modi-image.png", 
-  "2": "/images/trump-image.png",
-  "3": "/images/kennedy-image.jpeg",
-};
+import { useKalpApi } from '@/app/hooks/useKalpApi';
 
 const ReverseScrollViewSplits = (): React.ReactNode => {
-  type candidateType = {
-    id: string;
-    name: string;
-    votes: number;
-  };
+    const { getCandidate, voteForCandidate, loading, error } = useKalpApi();
 
-  const [candidates, setCandidates] = useState<candidateType[]>(initialCandidates);
+    const [candidates, setCandidates] = useState<{ [key: string]: number }>({
+        "Narendra Modi": 0,
+    });
 
-  useEffect(() => {
-    const data = localStorage.getItem("votes");
-    if (data) {
-      setCandidates(JSON.parse(data));
-    }
-  }, []);
-
-  const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
-
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 1.2", "center 0.35"],
-  });
-
-  const rotate = useTransform(scrollYProgress, [0, 1], ["10deg", "0deg"]);
-  const x = useTransform(scrollYProgress, [0, 1], ["-20rem", "0rem"]);
-  const y = useTransform(scrollYProgress, [0, 1], ["-20rem", "0rem"]);
-
-  const fetchCandidateVotes = async () => {
-    try {
-      const response = await axios.post(
-        'https://gateway-api.kalp.studio/v1/contract/kalp/invoke/3Lk7y1bWFHDvp8Z0VebBJLTmQHjdiVO91726951016273/GetResults',
-        {
-          network: "TESTNET",
-          blockchain: "KALP",
-          walletAddress: "5023f7fc565eb7de7f6256a3be204e75fe575225",
-        },
-        {
-          headers: {
-            'x-api-key': process.env.NEXT_PUBLIC_X_API_KEY,
-          }
+    const fetchVotes = async () => {
+        try {
+            const data = await getCandidate("Narendra Modi");
+            const kennedyVotes = data.result.result.votes;
+            setCandidates(prevState => ({
+                ...prevState,
+                "Narendra Modi": kennedyVotes
+            }));
+        } catch (err) {
+            console.error('Error fetching Modi votes:', err);
         }
-      );
+    };
 
-      const results = response.data.result?.votes || {};
-      const updatedCandidates: candidateType[] = candidates.map((candidate) => ({
-        ...candidate,
-        votes: results[candidate.id] || 0,
-      }));
-
-      setCandidates(updatedCandidates);
-      localStorage.setItem("votes", JSON.stringify(updatedCandidates)); // Store updated votes
-    } catch (error) {
-      console.error("Error fetching votes:", error);
-    }
-  };
-
-  const handleVote = async (id: string) => {
-    if (loadingState[id] === 'voting') return;
-
-    setLoadingState((prevState) => ({ ...prevState, [id]: 'voting' }));
-
-    const updatedCandidates = candidates.map((candidate) =>
-      candidate.id === id ? { ...candidate, votes: candidate.votes + 1 } : candidate
-    );
-
-    setCandidates(updatedCandidates);
-    localStorage.setItem("votes", JSON.stringify(updatedCandidates)); // Store updated votes immediately
-
-    try {
-      const response = await axios.post(
-        'https://gateway-api.kalp.studio/v1/contract/kalp/invoke/3Lk7y1bWFHDvp8Z0VebBJLTmQHjdiVO91726951016273/Vote',
-        {
-          network: "TESTNET",
-          blockchain: "KALP",
-          walletAddress: "5023f7fc565eb7de7f6256a3be204e75fe575225",
-          args: {
-            candidateID: id,
-          },
-        },
-        {
-          headers: {
-            'x-api-key': process.env.NEXT_PUBLIC_X_API_KEY,
-          },
+    const handleVote = async (candidateName: string) => {
+        try {
+            setLoadingState((prev) => ({ ...prev, [candidateName]: 'voting' })); // Set loading state for the candidate
+            await voteForCandidate(candidateName);
+            console.log(`Voted for ${candidateName}`);
+            alert('Voting successful for candidate: Narendra Modi.');
+            fetchVotes(); // Refresh vote count after voting
+        } catch (err) {
+            console.error('Vote error:', err);
+            alert('Voting failed for candidate: Narendra Modi. Please try again.');
+        } finally {
+            setLoadingState((prev) => ({ ...prev, [candidateName]: null })); // Reset loading state
         }
-      );
+    };
 
-      console.log('Vote response:', response.data);
-      alert(`Vote successful for candidate ID: ${id}`);
-      // No need to fetch votes again; they are already updated locally
-    } catch (error) {
-      console.error(`Error voting for candidate ID ${id}:`, error);
-      alert(`Voting failed for candidate ID: ${id}. Please try again.`);
-      // Do not revert vote count; keep the count updated
-    } finally {
-      setLoadingState((prevState) => ({ ...prevState, [id]: null }));
-    }
-  };
+    useEffect(() => {
+        fetchVotes(); // Fetch votes on page load
+    }, []);
 
-  useEffect(() => {
-    const savedVotes = localStorage.getItem("votes");
-    if (savedVotes) {
-      setCandidates(JSON.parse(savedVotes)); // Restore votes from localStorage
-    } else {
-      fetchCandidateVotes(); // Fetch fresh votes
-    }
-  }, []);
+    const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
+    // console.log(candidates);
 
-  // Filter candidate with ID 2 (Donald Trump)
-  const trumpCandidate = candidates.find((candidate) => candidate.id === "2");
+    const ref = useRef<HTMLDivElement>(null);
+    const { scrollYProgress } = useScroll({
+        target: ref,
+        offset: ["start 1.2", "center 0.35"]
+    });
 
-  return (
-    <div ref={ref} className="w-full h-[50vh] flex justify-between items-center">
-      {trumpCandidate && (
-        <motion.div
-          style={{ rotate, x }}
-          className="bg-white transition-all duration-300 ease-out origin-bottom-left rounded-2xl h-full flex-[1.5]"
-        >
-          {/* Candidate image */}
-          <img
-            src={candidateImages[trumpCandidate.id]}
-            alt={`${trumpCandidate.name} image`}
-            className="h-full w-full object-cover rounded-2xl"
-          />
-        </motion.div>
-      )}
+    const rotate = useTransform(scrollYProgress, [0, 1], ["10deg", "0deg"]);
+    const x = useTransform(scrollYProgress, [0, 1], ["-20rem", "0rem"]);
+    const y = useTransform(scrollYProgress, [0, 1], ["-20rem", "0rem"]);
 
-      {trumpCandidate && (
-        <motion.div style={{ y }} className="flex-1 text-white h-full">
-          <h1 className="text-[3rem] font-bold uppercase text-right">{trumpCandidate.name}</h1>
-          <p className="font-normal text-right">Votes: {trumpCandidate.votes}</p>
-          <div className="w-full flex justify-end mt-5">
-            <button
-              onClick={() => handleVote(trumpCandidate.id)}
-              disabled={loadingState[trumpCandidate.id] === 'voting'}
-              className="p-5 px-10 rounded-full border-[0.25px] border-white"
+    return (
+        <div ref={ref} className="w-full h-[50vh] flex justify-between items-center">
+            <motion.div
+                style={{ rotate, x }}
+                className="bg-white transition-all duration-300 ease-out origin-bottom-left rounded-2xl h-full flex-[1.5]"
             >
-              {loadingState[trumpCandidate.id] === 'voting' ? "Loading..." : "Vote"}
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </div>
-  );
+                {/* Candidate image */}
+                <img
+                    src={"/images/modi-image.png"}
+                    alt={"modi"}
+                    className="h-full w-full object-cover rounded-2xl"
+                />
+            </motion.div>
+
+            <motion.div
+                style={{ y }}
+                className="flex-1 text-white h-full"
+            >
+                <h1 className="text-[3rem] font-bold uppercase text-right">Narendra Modi</h1>
+                <p className="font-normal text-right">Votes: {candidates["Narendra Modi"]}</p>
+                <div className="w-full flex justify-end mt-5">
+                    <button
+                        onClick={() => handleVote("Narendra Modi")}
+                        disabled={loadingState["Narendra Modi"] === 'voting'}
+                        className="p-5 px-10 rounded-full border-[0.25px] border-white"
+                    >
+                        {loadingState["Narendra Modi"] === 'voting' ? "Loading..." : "Vote"}
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    );
 };
 
 export default ReverseScrollViewSplits;

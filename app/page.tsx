@@ -9,8 +9,8 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
-import ViewSplits from "@/app/components/ViewSplits";
-import ScrollViewSplits from "@/app/components/ScrollViewSplits";
+import ScrollViewSplitsA from "@/app/components/ScrollViewSplitsA";
+import ScrollViewSplitsB from "@/app/components/ScrollViewSplitsB";
 import ReverseScrollViewSplits from "@/app/components/ReverseScrollViewSplits";
 
 export default function Home(): React.ReactNode {
@@ -387,25 +387,25 @@ export default function Home(): React.ReactNode {
           className={`h-screen w-screen flex justify-center items-center`}
         >
           <motion.div
-
-              style={{
-                scale,
-                y,
-              }}
-              className={`w-[85%] transition-all overflow-hidden duration-300 ease-out h-[80%] rounded-xl mx-auto ${borderRadius ? `border-radius-${borderRadius}px` : ''}`}
-            >
-            <iframe
+            style={{
+              scale,
+              y,
+              borderRadius,
+            }}
+            className={`w-[85%] transition-all overflow-hidden duration-300 ease-out h-[80%] rounded-xl mx-auto`}
+          >
+           <iframe
               width="100%"
               height="100%"
-              src="https://www.youtube.com/embed/SFOREuAkk_4"
-              title="SIT223 Task-6.2C: CI CD with Jenkins and GitHub"
+              src="https://www.youtube.com/embed/UtXYrhk47XQ"
+              title="KalpVote"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
-            ></iframe>
+          ></iframe>
+ 
           </motion.div>
-
         </section>
 
         {/* Know Your Candidates section */}
@@ -446,11 +446,11 @@ export default function Home(): React.ReactNode {
             {/*this is just a spacer*/}
             <div className={`h-[10rem] w-full `} />
 
-            <ViewSplits />
+            <ScrollViewSplitsA />
             <div className={`h-[5rem] w-full `} />
             <ReverseScrollViewSplits />
             <div className={`h-[5rem] w-full `} />
-            <ScrollViewSplits />
+            <ScrollViewSplitsB />
           </div>
         </section>
 
