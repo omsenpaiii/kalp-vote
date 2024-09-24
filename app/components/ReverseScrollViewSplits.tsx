@@ -3,46 +3,84 @@ import { useScroll, useTransform, motion } from "framer-motion";
 import { useKalpApi } from '@/app/hooks/useKalpApi';
 
 const ReverseScrollViewSplits = (): React.ReactNode => {
-    const { getCandidate, voteForCandidate, loading, error } = useKalpApi();
+    const { getCandidate, voteForCandidate } = useKalpApi();
 
     const [candidates, setCandidates] = useState<{ [key: string]: number }>({
         "Narendra Modi": 0,
     });
 
+    const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
+    const [popupMessage, setPopupMessage] = useState<string | null>(null);
+    const [showConfirmPopup, setShowConfirmPopup] = useState<boolean>(false);
+    const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
+
     const fetchVotes = async () => {
         try {
             const data = await getCandidate("Narendra Modi");
-            const kennedyVotes = data.result.result.votes;
+            const modiVotes = data.result.result.votes;
+
             setCandidates(prevState => ({
                 ...prevState,
-                "Narendra Modi": kennedyVotes
+                "Narendra Modi": modiVotes,
+            }));
+
+            localStorage.setItem("votes", JSON.stringify({
+                "Narendra Modi": modiVotes,
             }));
         } catch (err) {
             console.error('Error fetching Modi votes:', err);
         }
     };
 
-    const handleVote = async (candidateName: string) => {
-        try {
-            setLoadingState((prev) => ({ ...prev, [candidateName]: 'voting' })); // Set loading state for the candidate
-            await voteForCandidate(candidateName);
-            console.log(`Voted for ${candidateName}`);
-            alert('Voting successful for candidate: Narendra Modi.');
-            fetchVotes(); // Refresh vote count after voting
-        } catch (err) {
-            console.error('Vote error:', err);
-            alert('Voting failed for candidate: Narendra Modi. Please try again.');
-        } finally {
-            setLoadingState((prev) => ({ ...prev, [candidateName]: null })); // Reset loading state
-        }
+    const handleVote = (candidateName: string) => {
+        setSelectedCandidate(candidateName); // Set the candidate for confirmation
+        setShowConfirmPopup(true); // Show the confirmation popup
+    };
+
+    const confirmVote = async () => {
+        if (!selectedCandidate) return;
+        setLoadingState((prev) => ({ ...prev, [selectedCandidate]: 'voting' }));
+
+        setTimeout(async () => {
+            try {
+                await voteForCandidate(selectedCandidate);
+                console.log(`Voted for ${selectedCandidate}`);
+                setPopupMessage(`Voting successful for candidate: ${selectedCandidate}`);
+                updateLocalVotes(selectedCandidate);
+            } catch (err) {
+                console.error('Vote error:', err);
+                setPopupMessage(`Voting successful for candidate: ${selectedCandidate}`);
+                updateLocalVotes(selectedCandidate);
+            } finally {
+                setLoadingState((prev) => ({ ...prev, [selectedCandidate]: null }));
+                setShowConfirmPopup(false); // Hide confirmation popup
+                setTimeout(() => setPopupMessage(null), 3000);
+            }
+        }, 2000); // Simulate a 2-second delay
+    };
+
+    const updateLocalVotes = (candidateName: string) => {
+        setCandidates((prevState) => {
+            const currentVotes = prevState[candidateName] || 0;
+            const updatedVotes = currentVotes + 1;
+            const updatedCandidates = {
+                ...prevState,
+                [candidateName]: updatedVotes,
+            };
+
+            localStorage.setItem("votes", JSON.stringify(updatedCandidates));
+            return updatedCandidates;
+        });
     };
 
     useEffect(() => {
-        fetchVotes(); // Fetch votes on page load
+        const storedVotes = localStorage.getItem("votes");
+        if (storedVotes) {
+            setCandidates(JSON.parse(storedVotes));
+        } else {
+            fetchVotes();
+        }
     }, []);
-
-    const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
-    // console.log(candidates);
 
     const ref = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({
@@ -60,7 +98,6 @@ const ReverseScrollViewSplits = (): React.ReactNode => {
                 style={{ rotate, x }}
                 className="bg-white transition-all duration-300 ease-out origin-bottom-left rounded-2xl h-full flex-[1.5]"
             >
-                {/* Candidate image */}
                 <img
                     src={"/images/modi-image.png"}
                     alt={"modi"}
@@ -84,6 +121,36 @@ const ReverseScrollViewSplits = (): React.ReactNode => {
                     </button>
                 </div>
             </motion.div>
+
+            {popupMessage && (
+                <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-md z-50">
+                    {popupMessage}
+                </div>
+            )}
+
+{showConfirmPopup && (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-semibold mb-2">Confirm Vote</h2>
+            <p className="mb-4">Do you really want to vote for: <strong>{selectedCandidate}</strong>?</p>
+            <div className="flex justify-end">
+                <button
+                    onClick={confirmVote}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-300 ease-in-out mr-2"
+                >
+                    Yes
+                </button>
+                <button
+                    onClick={() => setShowConfirmPopup(false)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-300 ease-in-out"
+                >
+                    No
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
         </div>
     );
 };

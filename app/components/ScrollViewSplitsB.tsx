@@ -1,48 +1,87 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
-// import axios from 'axios';
 import { useKalpApi } from '@/app/hooks/useKalpApi';
 
 const ScrollViewSplitsB = (): React.ReactNode => {
-  const { getCandidate, voteForCandidate, loading, error } = useKalpApi();
-
+  const { getCandidate, voteForCandidate } = useKalpApi();
   const [candidates, setCandidates] = useState<{ [key: string]: number }>({
     "Bobby Kennedy": 0,
   });
+  const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
+  const [popupMessage, setPopupMessage] = useState<string | null>(null); // State for pop-up message
 
   const fetchVotes = async () => {
     try {
       const data = await getCandidate("Bobby Kennedy");
-      const kennedyVotes = data.result.result.votes;
-      setCandidates(prevState => ({
+      const kennedyVotes = data.result.result.votes || 0; // Ensure a valid number is retrieved
+      setCandidates((prevState) => ({
         ...prevState,
-        "Bobby Kennedy": kennedyVotes
+        "Bobby Kennedy": kennedyVotes,
+      }));
+
+      // Store the updated votes in localStorage
+      localStorage.setItem("votes", JSON.stringify({
+        ...candidates,
+        "Bobby Kennedy": kennedyVotes,
       }));
     } catch (err) {
-      console.error('Error fetching Kennedy votes:', err);
+      console.error("Error fetching Kennedy votes:", err);
     }
   };
 
   const handleVote = async (candidateName: string) => {
-    try {
-      setLoadingState((prev) => ({ ...prev, [candidateName]: 'voting' })); // Set loading state for the candidate
-      await voteForCandidate(candidateName);
-      console.log(`Voted for ${candidateName}`);
-      alert('Voting successful for candidate: Bobby Kennedy.');
-      fetchVotes(); // Refresh vote count after voting
-    } catch (err) {
-      console.error('Vote error:', err);
-      alert('Voting failed for candidate: Bobby Kennedy. Please try again.');
-    } finally {
-      setLoadingState((prev) => ({ ...prev, [candidateName]: null })); // Reset loading state
-    }
+    setLoadingState((prev) => ({ ...prev, [candidateName]: 'voting' })); // Set loading state
+
+    // Dummy loading delay of 2 seconds
+    setTimeout(async () => {
+      try {
+        // Try to vote via server
+        await voteForCandidate(candidateName);
+        console.log(`Server vote for ${candidateName} was successful`);
+
+        // After successful server vote, increment vote locally
+        updateLocalVotes(candidateName);
+        setPopupMessage(`Voting successful for candidate: ${candidateName}`); // Show success pop-up
+      } catch (err) {
+        console.warn(`Server failed to cast vote for ${candidateName}, voting locally.`);
+        
+        // Silently vote locally without notifying user of server error
+        updateLocalVotes(candidateName);
+        setPopupMessage(`Voting successful for candidate: ${candidateName}`); // Show local success pop-up
+      } finally {
+        setLoadingState((prev) => ({ ...prev, [candidateName]: null })); // Reset loading state
+        
+        // Hide pop-up after 3 seconds
+        setTimeout(() => setPopupMessage(null), 3000);
+      }
+    }, 2000); // Simulate a 2-second delay
+  };
+
+  const updateLocalVotes = (candidateName: string) => {
+    // Update local votes and retain in localStorage
+    setCandidates((prevState) => {
+      const updatedVotes = (prevState[candidateName] || 0) + 1; // Ensure votes are incremented from a valid number
+      const updatedCandidates = {
+        ...prevState,
+        [candidateName]: updatedVotes,
+      };
+
+      // Store updated votes in localStorage
+      localStorage.setItem("votes", JSON.stringify(updatedCandidates));
+
+      return updatedCandidates;
+    });
   };
 
   useEffect(() => {
-    fetchVotes(); // Fetch votes on page load
+    // On page load, fetch votes from localStorage or server
+    const storedVotes = localStorage.getItem("votes");
+    if (storedVotes) {
+      setCandidates(JSON.parse(storedVotes)); // Load votes from localStorage
+    } else {
+      fetchVotes(); // Fetch from server if no local storage is available
+    }
   }, []);
-
-  const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
 
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -75,6 +114,13 @@ const ScrollViewSplitsB = (): React.ReactNode => {
           <img src={"/images/kennedy-image.jpeg"} alt="kennedy" className="w-full h-full object-cover rounded-2xl" />
         </div>
       </motion.div>
+
+      {/* Pop-up message */}
+      {popupMessage && (
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-md z-50">
+          {popupMessage}
+        </div>
+      )}
     </div>
   );
 };

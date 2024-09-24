@@ -1,0 +1,14 @@
+@"
+# Ignore node_modules
+node_modules/
+
+# Ignore log files
+*.log
+
+# Ignore build files
+/dist/
+/build/
+
+# Ignore environment variables
+.env
+"@ | Set-Content -Path .gitignore -Encoding utf8

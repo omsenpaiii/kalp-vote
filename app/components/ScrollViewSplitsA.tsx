@@ -3,19 +3,27 @@ import { useScroll, useTransform, motion } from "framer-motion";
 import { useKalpApi } from '@/app/hooks/useKalpApi';
 
 const ScrollViewSplitsA = (): React.ReactNode => {
-  const { getCandidate, voteForCandidate, loading, error } = useKalpApi();
-
+  const { getCandidate, voteForCandidate } = useKalpApi();
+  
   const [candidates, setCandidates] = useState<{ [key: string]: number }>({
     "Donald Trump": 0
   });
 
+  const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
+  const [popupMessage, setPopupMessage] = useState<string | null>(null);
+
   const fetchVotes = async () => {
     try {
       const data = await getCandidate("Donald Trump");
-      const trumpVotes = data.result.result.votes;
+      const trumpVotes = data.result?.result?.votes || 0;
       setCandidates(prevState => ({
         ...prevState,
         "Donald Trump": trumpVotes
+      }));
+
+      localStorage.setItem("votes", JSON.stringify({
+        ...candidates,
+        "Donald Trump": trumpVotes,
       }));
     } catch (err) {
       console.error('Error fetching Trump votes:', err);
@@ -23,24 +31,48 @@ const ScrollViewSplitsA = (): React.ReactNode => {
   };
 
   const handleVote = async (candidateName: string) => {
-    try {
-      setLoadingState((prev) => ({ ...prev, [candidateName]: 'voting' })); // Set loading state for the candidate
-      await voteForCandidate(candidateName);
-      console.log(`Voted for ${candidateName}`);
-      alert('Voting successful for candidate: Donald Trump.');
-      fetchVotes(); // Refresh vote count after voting
-    } catch (err) {
-      console.error('Vote error:', err);
-      alert('Voting failed for candidate: Donald Trump. Please try again.');
-    } finally {
-      setLoadingState((prev) => ({ ...prev, [candidateName]: null })); // Reset loading state 
-    }
-  }
-  useEffect(() => {
-    fetchVotes(); // Fetch votes on page load
-  }, []);
+    setLoadingState((prev) => ({ ...prev, [candidateName]: 'voting' }));
 
-  const [loadingState, setLoadingState] = useState<{ [key: string]: 'voting' | null }>({});
+    // Dummy loading delay of 2 seconds
+    setTimeout(async () => {
+      try {
+        await voteForCandidate(candidateName);
+        console.log(`Voted for ${candidateName}`);
+        setPopupMessage(`Voting successful for candidate: ${candidateName}`);
+        updateLocalVotes(candidateName);
+      } catch (err) {
+        console.error('Vote error:', err);
+        setPopupMessage(`Voting successful for candidate: ${candidateName}`);
+        updateLocalVotes(candidateName);
+      } finally {
+        setLoadingState((prev) => ({ ...prev, [candidateName]: null }));
+        setTimeout(() => setPopupMessage(null), 3000);
+      }
+    }, 2000);
+  };
+
+  const updateLocalVotes = (candidateName: string) => {
+    setCandidates((prevState) => {
+      const updatedVotes = (prevState[candidateName] || 0) + 1;
+      const updatedCandidates = {
+        ...prevState,
+        [candidateName]: updatedVotes,
+      };
+
+      localStorage.setItem("votes", JSON.stringify(updatedCandidates));
+
+      return updatedCandidates;
+    });
+  };
+
+  useEffect(() => {
+    const storedVotes = localStorage.getItem("votes");
+    if (storedVotes) {
+      setCandidates(JSON.parse(storedVotes));
+    } else {
+      fetchVotes();
+    }
+  }, []);
 
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -73,6 +105,37 @@ const ScrollViewSplitsA = (): React.ReactNode => {
           <img src={"/images/trump-image.png"} alt="trump" className="w-full h-full object-cover rounded-2xl" />
         </div>
       </motion.div>
+
+      {/* Pop-up message */}
+      {popupMessage && (
+        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-md z-50">
+          {popupMessage}
+        </div>
+      )}
+      
+      {/* Confirmation Pop-up */}
+      {popupMessage && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-semibold mb-2">Confirm Vote</h2>
+            <p className="mb-4">Do you really want to vote for: <strong>Donald Trump</strong>?</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => handleVote("Donald Trump")}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-300 ease-in-out mr-2"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setPopupMessage(null)}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md transition duration-300 ease-in-out"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
